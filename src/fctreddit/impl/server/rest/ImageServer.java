@@ -1,26 +1,28 @@
 package fctreddit.impl.server.rest;
 
-import java.net.InetAddress;
-import java.net.URI;
-import java.util.logging.Logger;
 
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
-public class UsersServer {
+import java.net.InetAddress;
+import java.net.URI;
+import java.util.logging.Logger;
 
-    private static Logger Log = Logger.getLogger(UsersServer.class.getName());
+public class ImageServer {
+    private static Logger Log = Logger.getLogger(ImageServer.class.getName());
 
     static {
         System.setProperty("java.net.preferIPv4Stack", "true");
         System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s\n");
     }
 
-    public static final int PORT = 8080;
-    public static final String SERVICE = "Users";
+    public static final int PORT = 8082;
+    public static final String SERVICE = "Image";
     private static final String SERVER_URI_FMT = "http://%s:%s/rest";
 
+
     public static void main(String[] args) {
+
         try {
 
             ResourceConfig config = new ResourceConfig();
@@ -33,10 +35,6 @@ public class UsersServer {
             Log.info(String.format("%s Server ready @ %s\n",  SERVICE, serverURI));
 
             //More code can be executed here...
-            String host = InetAddress.getLocalHost().getHostAddress();
-            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, "Discovery", "tcp://" + host + ":" + PORT);
-            disc.start();
-
         } catch( Exception e) {
             Log.severe(e.getMessage());
         }
