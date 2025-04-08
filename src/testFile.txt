@@ -1,0 +1,9 @@
+mvn clean compile assembly:single docker:build
+
+docker network create -d bridge sdnet
+
+docker run -h serv --name serv --network sdnet -p 8080:8080 sd2425-tp1-api-65498-66578
+
+
+
+docker run -it --network sdnet sd2425-tp1-api-65498-66578 /bin/bash
