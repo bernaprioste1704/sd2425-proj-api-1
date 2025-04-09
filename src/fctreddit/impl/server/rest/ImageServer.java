@@ -34,6 +34,11 @@ public class ImageServer {
 
             Log.info(String.format("%s Server ready @ %s\n",  SERVICE, serverURI));
 
+            String host = InetAddress.getLocalHost().getHostAddress();
+            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);
+            disc.start();
+
+
             //More code can be executed here...
         } catch( Exception e) {
             Log.severe(e.getMessage());

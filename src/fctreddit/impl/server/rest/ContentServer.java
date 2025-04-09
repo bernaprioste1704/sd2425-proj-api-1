@@ -26,9 +26,6 @@ public class ContentServer {
 
         try {
 
-            String host = InetAddress.getLocalHost().getHostAddress();
-            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, "Discovery", "tcp://" + host + ":" + PORT);
-            disc.start();
 
             ResourceConfig config = new ResourceConfig();
             config.register(UsersResource.class);
@@ -40,6 +37,11 @@ public class ContentServer {
             Log.info(String.format("%s Server ready @ %s\n",  SERVICE, serverURI));
 
             //More code can be executed here...
+
+
+            String host = InetAddress.getLocalHost().getHostAddress();
+            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);
+            disc.start();
         } catch( Exception e) {
             Log.severe(e.getMessage());
         }

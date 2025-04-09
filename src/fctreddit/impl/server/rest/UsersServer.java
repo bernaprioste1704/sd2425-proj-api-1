@@ -34,7 +34,7 @@ public class UsersServer {
 
             //More code can be executed here...
             String host = InetAddress.getLocalHost().getHostAddress();
-            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, "Discovery", "tcp://" + host + ":" + PORT);
+            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);
             disc.start();
 
         } catch( Exception e) {
