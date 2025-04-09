@@ -12,7 +12,7 @@ public class User {
 	@Id
 	private String userId;
 	private String fullName;
-	private String password;
+	private  String password;
 	private String avatarUrl;
 	
 	public User(){	
@@ -98,6 +98,7 @@ public class User {
 	public void setFullName(String fullName) {
 		this.fullName = fullName;
 	}
+
 
 	public String getPassword() {
 		return password;

@@ -24,12 +24,11 @@ public class JavaUsers implements Users {
         Log.info("createUser : " + user);
 
         // Check if user data is valid
-        if (user.getUserId() == null || user.getPassword() == null || user.getFullName() == null
+        if (user == null || user.getUserId() == null || user.getPassword() == null || user.getPassword().equals("") || user.getFullName() == null
                 || user.getEmail() == null) {
             Log.info("User object invalid.");
             return Result.error(ErrorCode.BAD_REQUEST);
         }
-
         try {
             hibernate.persist(user);
         } catch (Exception e) {
@@ -46,7 +45,7 @@ public class JavaUsers implements Users {
         Log.info("getUser : user = " + userId + "; pwd = " + password);
 
         // Check if user is valid
-        if (userId == null || password == null) {
+        if (userId == null) {
             Log.info("UserId or password null.");
             return Result.error(ErrorCode.BAD_REQUEST);
         }
@@ -83,15 +82,36 @@ public class JavaUsers implements Users {
             Log.info("UserId or password null.");
             return Result.error(ErrorCode.BAD_REQUEST);
         }
-
+        User updatedUser = null;
         try {
-            hibernate.update(user);
+            updatedUser = hibernate.get(User.class, userId);
+            if (updatedUser == null) {
+                Log.info("User does not exist.");
+                return Result.error(ErrorCode.NOT_FOUND);
+            }
+            if (!updatedUser.getPassword().equals(password)) {
+                Log.info("Password is incorrect");
+                return Result.error(ErrorCode.FORBIDDEN);
+            }
+            if (user.getPassword() != null) {
+                updatedUser.setPassword(user.getPassword());
+            }
+            if (user.getFullName() != null) {
+                updatedUser.setFullName(user.getFullName());
+            }
+            if (user.getEmail() != null) {
+                updatedUser.setEmail(user.getEmail());
+            }
+            if (user.getPassword() != null) {
+                updatedUser.setPassword(user.getPassword());
+            }
+            hibernate.update(updatedUser);
         } catch (Exception e) {
             e.printStackTrace();
             return Result.error(ErrorCode.INTERNAL_ERROR);
         }
         // TODO Auto-generated method stub
-        return Result.ok(user);
+        return Result.ok(updatedUser);
     }
 
     @Override

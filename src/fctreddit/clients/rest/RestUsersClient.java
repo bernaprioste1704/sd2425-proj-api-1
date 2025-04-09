@@ -55,7 +55,6 @@ public class RestUsersClient extends UsersClient {
                         .post(Entity.entity(user, MediaType.APPLICATION_JSON));
 
                 int status = r.getStatus();
-                //Log.info(Result.error(getErrorCodeFrom(status))).value();
                 if( status != Status.OK.getStatusCode() )
                     return Result.error( getErrorCodeFrom(status));
                 else
