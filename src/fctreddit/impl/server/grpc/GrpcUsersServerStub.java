@@ -105,6 +105,8 @@ public class GrpcUsersServerStub implements UsersGrpc.AsyncService, BindableServ
 			responseObserver.onCompleted();
 		}
 	}
+
+
     
     protected static Throwable errorCodeToStatus( Result.ErrorCode error ) {
     	var status =  switch( error) {

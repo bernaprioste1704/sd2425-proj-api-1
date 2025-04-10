@@ -1,7 +1,9 @@
 package fctreddit.clients.rest;
 
+import fctreddit.api.Post;
 import fctreddit.api.User;
 import fctreddit.api.java.Result;
+import fctreddit.impl.server.java.JavaContent;
 import fctreddit.impl.server.java.JavaUsers;
 //import fctreddit.impl.server.persistence.Hibernate;
 
@@ -31,8 +33,12 @@ public class test {
 
         User usr = new User(userId, fullName, email, password);
         JavaUsers js = new JavaUsers();
+        JavaContent jc = new JavaContent();
+
         js.createUser(usr);
-        js.getUser(userId, null);
+        Post post = new Post(userId, "text", null);
+        post.setPostId("1");
+        jc.createPost(post, "d");
         //System.out.println(usr.getPassword());
     }
 }
