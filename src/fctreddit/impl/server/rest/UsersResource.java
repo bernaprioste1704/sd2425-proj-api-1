@@ -3,7 +3,11 @@ package fctreddit.impl.server.rest;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.sun.istack.Builder;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import fctreddit.api.User;
 import fctreddit.api.java.Result;
@@ -11,11 +15,15 @@ import fctreddit.api.java.Users;
 import fctreddit.api.rest.RestUsers;
 import fctreddit.impl.server.java.JavaUsers;
 
+import javax.swing.text.html.parser.Entity;
+
+
 public class UsersResource implements RestUsers {
 
     private static Logger Log = Logger.getLogger(UsersResource.class.getName());
 
     final Users impl;
+
 
     public UsersResource() {
         impl = new JavaUsers();
@@ -76,6 +84,8 @@ public class UsersResource implements RestUsers {
 
         return res.value();
     }
+
+
 
     protected static Status errorCodeToStatus( Result.ErrorCode error ) {
         Status status =  switch( error) {
