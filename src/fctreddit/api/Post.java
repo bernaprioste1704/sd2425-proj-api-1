@@ -4,8 +4,14 @@ package fctreddit.api;
  * Represents a Post and a Reply in the system
  */
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import java.util.UUID;
+
+@Entity
 public class Post {
 
+	@Id
 	private String postId;
 	private String authorId;
 	private long creationTimestamp;
@@ -21,7 +27,7 @@ public class Post {
 	}
 	
 	public Post(String authorId, String content) {
-		this.postId = null;
+		this.postId = UUID.randomUUID().toString();;
 		this.authorId = authorId;
 		this.creationTimestamp = System.currentTimeMillis();
 		this.content = content;
