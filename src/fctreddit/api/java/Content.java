@@ -14,7 +14,8 @@ public interface Content {
 	
 	
 	/**
-	 * Creates a new Post (that can be an answer to another Post), generating its unique identifier. 
+	 * Creates a new Post (that can be an answer to another Post, in which case the parentURL should be
+	 * a valid URL for another post), generating its unique identifier. 
 	 * The result should be the identifier of the Post in case of success.
 	 * The creation timestamp of the post should be set to be the time in the server when the request
 	 * was received.
@@ -22,7 +23,7 @@ public interface Content {
 	 * @param post - The Post to be created, that should contain the userId of the author in the appropriate field.
 	 * @param password - the password of author of the new post
 	 * @return OK and PostID if the post was created;
-	 * NOT FOUND, if the owner of the short does not exist;
+	 * NOT FOUND, if the owner of the post does not exist, or if the parent Post (if not null) does not exists;
 	 * FORBIDDEN, if the password is not correct;
 	 * BAD_REQUEST, otherwise.
 	 */
@@ -39,7 +40,9 @@ public interface Content {
 	 * @param sortOrder this is an optional parameter, the admissible values are on constants MOST_UP_VOTES
 	 * and MOST_REPLIES, if the first is indicated, posts IDs should be ordered from the Post with more votes
 	 * to the one with less votes. If the second is provided posts IDs should be ordered from the Post with 
-	 * more direct replies to the one with less direct replies.
+	 * more direct replies to the one with less direct replies. In ordering by MOST_UP_VOTES or by MOST_REPLIES
+	 * if there are posts with the same number of up votes or direct replies, respectively, those should be
+	 * ordered by the lexicographic order of the PostID.
 	 * @return 	OK and the List of PostIds that match all options in the right order 
 	 * 			
 	 */
@@ -85,18 +88,7 @@ public interface Content {
 	 */
 	public Result<Post> updatePost(String postId, String userPassword, Post post);
 	
-	/**
-	 * Deletes a given Post, only the author of the Post can do this operation. A successful delete will also remove
-	 * any reply to this post (or replies to those replies) even if performed by different authors.
-	 * 
-	 * @param postId the unique identifier of the Post to be deleted
-	 * @return 	NO_CONTENT in case of success 
-	 * 			NOT_FOUND if postId does not match an existing post
-	 * 			FORBIDDEN if the password is not correct (it should always be considered the authorId 
-	 * 					  of the post as the user that is attempting to execute this operation);
-	 *			CONFLICT  if this post already has any other content referencing it (is the parent of
-	 *					  another post or if there is at least one upvote or a downvote to this post.
-	 */	
+ 
 	public Result<Void> deletePost(String postId, String userPassword);
 	
 	/**
