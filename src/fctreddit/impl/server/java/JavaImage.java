@@ -1,5 +1,6 @@
 package fctreddit.impl.server.java;
 
+import fctreddit.api.User;
 import fctreddit.api.java.Image;
 import fctreddit.api.java.Result;
 import fctreddit.impl.server.persistence.Hibernate;
@@ -18,7 +19,21 @@ public class JavaImage implements Image {
 
     @Override
     public Result<String> createImage(String userId, byte[] imageContents, String password) {
-        Log.info("Not implemented yet");
+        Log.info("createImage : user = " + userId + "; pwd = " + password);
+        if (userId == null || imageContents == null)
+            return Result.error(Result.ErrorCode.BAD_REQUEST);
+
+        try {
+
+            User user = hibernate.get(User.class, userId);
+            if (!user.getPassword().equals(password)) {
+                Log.info("Password is incorrect");
+                return Result.error(Result.ErrorCode.FORBIDDEN);
+            }
+            hibernate.persist();
+        }
+
+
         return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
     }
 

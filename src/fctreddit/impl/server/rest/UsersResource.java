@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.sun.istack.Builder;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Invocation;
@@ -16,7 +17,6 @@ import fctreddit.api.rest.RestUsers;
 import fctreddit.impl.server.java.JavaUsers;
 
 import javax.swing.text.html.parser.Entity;
-
 
 public class UsersResource implements RestUsers {
 

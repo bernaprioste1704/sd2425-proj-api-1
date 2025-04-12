@@ -39,6 +39,7 @@ public class test {
         Post post = new Post(userId, "text");
         //post.setPostId("1");
         jc.createPost(post, "d");
+        jc.createPost(post, "d");
         //System.out.println(usr.getPassword());
     }
 }
