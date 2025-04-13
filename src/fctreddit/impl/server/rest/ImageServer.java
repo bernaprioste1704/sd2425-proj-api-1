@@ -1,6 +1,7 @@
 package fctreddit.impl.server.rest;
 
 
+import fctreddit.impl.server.Discovery;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 

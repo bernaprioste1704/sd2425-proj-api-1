@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.logging.Logger;
 
-import fctreddit.impl.server.rest.Discovery;
+import fctreddit.impl.server.Discovery;
 
 public class ContentServer {
     private static Logger Log = Logger.getLogger(ContentServer.class.getName());
