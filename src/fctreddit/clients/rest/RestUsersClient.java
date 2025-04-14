@@ -74,6 +74,19 @@ public class RestUsersClient extends UsersClient {
         else
             return Result.ok( r.readEntity( User.class ));
     }
+    /*
+    public Result<User> getUser(String userId, String pwd) {
+        Response r = target.path( userId )
+                .queryParam(RestUsers.PASSWORD, pwd).request()
+                .accept(MediaType.APPLICATION_JSON)
+                .get();
+
+        int status = r.getStatus();
+        if( status != Status.OK.getStatusCode() )
+            return Result.error( getErrorCodeFrom(status));
+        else
+            return Result.ok( r.readEntity( User.class ));
+    }*/
 
 
     public Result<User> updateUser(String userId, String oldPassword, User user) {
@@ -104,8 +117,6 @@ public class RestUsersClient extends UsersClient {
             return Result.ok(r.readEntity(User.class));
 
     }
-
-
 
 
     public Result<List<User>> searchUsers(String pattern) {

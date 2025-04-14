@@ -25,9 +25,11 @@ public class ImageResource implements RestImage {
         Log.info("createImage : user = " + userId + "; pwd = " + password);
 
         Result<String> res = impl.createImage(userId, imageContents, password);
+
         if(!res.isOK()) {
             throw new WebApplicationException(errorCodeToStatus(res.error()));
         }
+
         return res.value();
     }
 

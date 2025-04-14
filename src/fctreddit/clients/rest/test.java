@@ -38,10 +38,11 @@ public class test {
 
         js.createUser(usr);
         js.getUser(userId, password);
-        byte[] image = new byte[10];
-        image[0] = 1;
-        image[1] = 1;
+        js.getUser(userId, "asd");
+        //byte[] image = new byte[10];
+        //image[0] = 1;
+        //image[1] = 1;
 
-        ji.createImage(userId, image, password);
+        //ji.createImage(userId, image, "de");
     }
 }

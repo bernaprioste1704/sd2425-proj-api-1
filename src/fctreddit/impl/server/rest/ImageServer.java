@@ -21,13 +21,12 @@ public class ImageServer {
     public static final String SERVICE = "Image";
     private static final String SERVER_URI_FMT = "http://%s:%s/rest";
 
-
     public static void main(String[] args) {
 
         try {
 
             ResourceConfig config = new ResourceConfig();
-            config.register(UsersResource.class);
+            config.register(ImageResource.class);
 
             String ip = InetAddress.getLocalHost().getHostAddress();
             String serverURI = String.format(SERVER_URI_FMT, ip, PORT);
@@ -36,11 +35,10 @@ public class ImageServer {
             Log.info(String.format("%s Server ready @ %s\n",  SERVICE, serverURI));
 
             String host = InetAddress.getLocalHost().getHostAddress();
-            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);
+            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, serverURI);
             disc.start();
 
 
-            //More code can be executed here...
         } catch( Exception e) {
             Log.severe(e.getMessage());
         }

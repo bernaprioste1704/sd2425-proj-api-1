@@ -22,6 +22,7 @@ public class UsersServer {
     private static final String SERVER_URI_FMT = "http://%s:%s/rest";
 
     public static void main(String[] args) {
+
         try {
 
             ResourceConfig config = new ResourceConfig();
@@ -33,10 +34,12 @@ public class UsersServer {
 
             Log.info(String.format("%s Server ready @ %s\n",  SERVICE, serverURI));
 
-            //More code can be executed here...
             String host = InetAddress.getLocalHost().getHostAddress();
-            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);
+
+            /*Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);*/
+            Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, serverURI);
             disc.start();
+
 
         } catch( Exception e) {
             Log.severe(e.getMessage());

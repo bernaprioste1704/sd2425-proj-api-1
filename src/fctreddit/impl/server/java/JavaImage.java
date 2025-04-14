@@ -3,7 +3,9 @@ package fctreddit.impl.server.java;
 import fctreddit.api.User;
 import fctreddit.api.java.Image;
 import fctreddit.api.java.Result;
+import fctreddit.api.java.Users;
 import fctreddit.clients.CreateUserClient;
+import fctreddit.clients.GetUsersClient;
 import fctreddit.clients.grpc.GrpcUsersClient;
 import fctreddit.clients.java.UsersClient;
 import fctreddit.clients.rest.RestUsersClient;
@@ -44,54 +46,36 @@ public class JavaImage implements Image {
         }
 
         String imageId = UUID.randomUUID().toString();
-        Path pathToFile = Paths.get(IMAGES_DIR +
-                File.separator +
-                userId + File.separator +
-                imageId + ".png");
+        Path pathToFile = Paths.get(IMAGES_DIR, userId, imageId + ".png");
 
         try {
-
             Files.createDirectories(pathToFile.getParent());
-
-            Files.deleteIfExists(pathToFile);
             Files.write(pathToFile, image);
         } catch (Exception e) {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return pathToFile.toString();
+
+        // Return a URI to access the image via the GET endpoint
+        return "http://172.18.0.3:8082/rest/image/" + userId + "/" + imageId;
     }
 
-    private Result<User> verifyUserIdAuxiliarFunction(String userId, String password, URI serviceURI) {
-        UsersClient client = null;
 
-        //if(serverUrl.endsWith("rest"))
-            client = new RestUsersClient(serviceURI);
-        /*else
-            client = new GrpcUsersClient(serviceURI);*/
-
-        Result<User> result = client.getUser(userId, password);
-
-
-        return result;
-    }
     @Override
     public Result<String> createImage(String userId, byte[] imageContents, String password) {
         Log.info("createImage : user = " + userId + "; pwd = " + password);
-        if (userId == null || imageContents == null)
+        if (userId == null)
             return Result.error(Result.ErrorCode.BAD_REQUEST);
 
         try {
-            Discovery discovery = new Discovery(Discovery.DISCOVERY_ADDR);
-            discovery.start();
-            URI serviceURI = discovery.knownUrisOf(UsersServer.SERVICE, 1)[0];
+            Users client = new GetUsersClient().getClient();
 
-            Result<User> result = verifyUserIdAuxiliarFunction(userId, password, serviceURI);
+            Result<User> result = client.getUser(userId, password);
 
             if( result.isOK()  )
                 Log.info("Get user:" + result.value() );
             else {
                 Log.info("Get user failed with error: " + result.error());
-                return Result.error(Result.ErrorCode.INTERNAL_ERROR);
+                return Result.error(result.error());
             }
 
             return Result.ok(associateImage(userId, imageContents));
@@ -106,13 +90,20 @@ public class JavaImage implements Image {
 
 
         //return Result.ok(user);
-    }
+    } 
 
 
     @Override
     public Result<byte[]> getImage(String userId, String imageId) {
         Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+        if (userId == null || imageId == null) {
+            return Result.error(Result.ErrorCode.BAD_REQUEST);
+
+        try {
+            Users client = new GetUsersClient().getClient();
+            Result<User> result = client.getUser(userId, password);
+
+        }
     }
 
 

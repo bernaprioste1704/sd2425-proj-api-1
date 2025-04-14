@@ -43,7 +43,6 @@ public class JavaUsers implements Users {
     @Override
     public Result<User> getUser(String userId, String password) {
         Log.info("getUser : user = " + userId + "; pwd = " + password);
-
         // Check if user is valid
         if (userId == null) {
             Log.info("UserId or password null.");

@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 public class Discovery {
 	private static Logger Log = Logger.getLogger(Discovery.class.getName());
 
+
+
 	static {
 		// addresses some multicast issues on some TCP/IP stacks
 		System.setProperty("java.net.preferIPv4Stack", "true");
@@ -40,11 +42,13 @@ public class Discovery {
 	// Allowed IP Multicast range: 224.0.0.1 - 239.255.255.255
 	static final public InetSocketAddress DISCOVERY_ADDR = new InetSocketAddress("226.226.226.226", 2266);
 	static final int DISCOVERY_ANNOUNCE_PERIOD = 1000;
-	static final int DISCOVERY_RETRY_TIMEOUT = 5000;
+	static final int DISCOVERY_RETRY_TIMEOUT = 3000;
 	static final int MAX_DATAGRAM_SIZE = 65536;
 
 	// Used separate the two fields that make up a service announcement.
 	private static final String DELIMITER = "\t";
+
+	private static Discovery instance;  // Static field for the single instance
 
 	private final InetSocketAddress addr;
 	private final String serviceName;
@@ -77,6 +81,8 @@ public class Discovery {
 		this(addr, null, null);
 	}
 
+
+
 	/**
 	 * Starts sending service announcements at regular intervals...
 	 * @throws IOException 
@@ -89,8 +95,8 @@ public class Discovery {
 
 		if (this.serviceName != null && this.serviceURI != null) {
 
-			Log.info(String.format("Starting Discovery announcements on: %s for: %s -> %s", addr, serviceName,
-					serviceURI));
+			/*Log.info(String.format("Starting Discovery announcements on: %s for: %s -> %s", addr, serviceName,
+					serviceURI));*/
 
 			byte[] announceBytes = String.format("%s%s%s", serviceName, DELIMITER, serviceURI).getBytes();
 			DatagramPacket announcePkt = new DatagramPacket(announceBytes, announceBytes.length, addr);
@@ -123,8 +129,8 @@ public class Discovery {
 					String msg = new String(pkt.getData(), 0, pkt.getLength());
 					String[] msgElems = msg.split(DELIMITER);
 					if (msgElems.length == 2) { // periodic announcement
-						System.out.printf("FROM %s (%s) : %s\n", pkt.getAddress().getHostName(),
-								pkt.getAddress().getHostAddress(), msg);
+						/*System.out.printf("FROM %s (%s) : %s\n", pkt.getAddress().getHostName(),
+								pkt.getAddress().getHostAddress(), msg);*/
 
 						Instant timestamp = Instant.now();
 						try {
@@ -160,18 +166,21 @@ public class Discovery {
 	 * @return an array of URI with the service instances discovered.
 	 * 
 	 */
-	public URI[] knownUrisOf(String serviceName, int minReplies) {
-		// TODO: implement this method
+	public URI[] knownUrisOf(String serviceName, int minReplies) throws InterruptedException {
 		if (minReplies < 0) {
 			throw new IllegalArgumentException("minReplies must be a positive number");
 		}
-		if (receivedAnnouncements.size() >= minReplies) {
-			ConcurrentHashMap<URI, Instant> urlsTuples = receivedAnnouncements.get(serviceName);
-			return urlsTuples.keySet().toArray(new URI[0]);
+			while (true) {
+				ConcurrentHashMap<URI, Instant> urlsTuples = receivedAnnouncements.get(serviceName);
 
-		}
-        return new URI[0];
-    }
+				if (urlsTuples != null && urlsTuples.size() >= minReplies) {
+					return urlsTuples.keySet().toArray(new URI[0]);
+				}
+
+				Thread.sleep(DISCOVERY_RETRY_TIMEOUT);
+			}
+	}
+
 		// Main just for testing purposes
 		public static void main (String[]args) throws Exception {
 			Discovery discovery = new Discovery(DISCOVERY_ADDR, "test",
