@@ -33,6 +33,7 @@ public class ImageResource implements RestImage {
         return res.value();
     }
 
+    @Override
     public byte[] getImage(String userId, String imageId) {
         Log.info("getImage : user = " + userId + "; imageId = " + imageId);
         Result<byte[]> res = impl.getImage(userId, imageId);

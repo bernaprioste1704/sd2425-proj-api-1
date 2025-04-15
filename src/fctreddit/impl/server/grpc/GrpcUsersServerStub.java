@@ -21,23 +21,12 @@ import fctreddit.impl.grpc.generated_java.UsersProtoBuf.DeleteUserArgs;
 import fctreddit.impl.grpc.generated_java.UsersProtoBuf.SearchUserArgs;
 import fctreddit.impl.grpc.generated_java.UsersProtoBuf.GrpcUser;
 
-
-
-
-
-
-
-
-
-//import fctreddit.impl.grpc.util.DataModelAdaptor;
-//import fctreddit.impl.server.grpc.generated_java.UsersGrpc;
-//import fctreddit.impl.server.grpc.generated_java.UsersProtoBuf.*;
 import fctreddit.impl.server.java.JavaUsers;
 
 import java.util.List;
 
 
-public class GrpcUsersServerStub implements UsersGrpc.AsyncService, BindableService{
+public class GrpcUsersServerStub implements UsersGrpc.AsyncService, BindableService {
 
 	Users impl = new JavaUsers();
 	

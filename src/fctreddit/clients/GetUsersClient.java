@@ -20,6 +20,7 @@ public class GetUsersClient {
 
     private static Discovery discoveryInstance;
 
+
     Users client = null;
     private static Logger Log = Logger.getLogger(GetUsersClient.class.getName());
 

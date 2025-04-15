@@ -90,26 +90,38 @@ public class JavaImage implements Image {
 
 
         //return Result.ok(user);
-    } 
-
-
-    @Override
-    public Result<byte[]> getImage(String userId, String imageId) {
-        Log.info("Not implemented yet");
-        if (userId == null || imageId == null) {
-            return Result.error(Result.ErrorCode.BAD_REQUEST);
-
-        try {
-            Users client = new GetUsersClient().getClient();
-            Result<User> result = client.getUser(userId, password);
-
-        }
     }
 
 
     @Override
+    public Result<byte[]> getImage(String userId, String imageId) {
+        Log.info("getImage : user = " + userId + ", imageId = " + imageId);
+
+        if (userId == null || imageId == null) {
+            return Result.error(Result.ErrorCode.BAD_REQUEST);
+        }
+        Log.info("bananas");
+
+        Path pathToFile = Paths.get(IMAGES_DIR, userId, imageId + ".png");
+
+        try {
+            if (!Files.exists(pathToFile)) {
+                return Result.error(Result.ErrorCode.NOT_FOUND);
+            }
+            byte[] imageBytes = Files.readAllBytes(pathToFile);
+            return Result.ok(imageBytes);
+
+        } catch (IOException e) {
+            Log.severe("Error reading image file: " + e.getMessage());
+            return Result.error(Result.ErrorCode.INTERNAL_ERROR);
+        }
+    }
+
+
+
+    @Override
     public Result<Void> deleteImage(String userId, String imageId, String password) {
-        Log.info("Not implemented yet");
+        Log.info("Not implemented yett");
         return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
     }
 
