@@ -34,15 +34,10 @@ public class test {
 
         User usr = new User(userId, fullName, email, password);
         JavaUsers js = new JavaUsers();
-        JavaImage ji = new JavaImage();
+        JavaContent jc = new JavaContent();
 
         js.createUser(usr);
         js.getUser(userId, password);
-        js.getUser(userId, "asd");
-        //byte[] image = new byte[10];
-        //image[0] = 1;
-        //image[1] = 1;
 
-        //ji.createImage(userId, image, "de");
     }
 }

@@ -43,7 +43,7 @@ public interface RestContent {
 	 * was received.
 	 * 
 	 * @param post - The Post to be created, that should contain the userId of the author in the appropriate field.
-	 * @param password - the password of author of the new post
+	 * @param userPassword - the password of author of the new post
 	 * @return OK and PostID if the post was created;
 	 * NOT FOUND, if the owner of the post does not exist, or the parentPost (if not null) does not exists;
 	 * FORBIDDEN, if the password is not correct;
@@ -52,7 +52,7 @@ public interface RestContent {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String createPost(Post post, @QueryParam(PASSWORD) String userPassword);
+	public String createPost(Post post, @QueryParam(PASSWORD) String password);
 	
 	/**
 	 * Retrieves a list with all top-level Posts unique identifiers (i.e., Posts that have no parent Post).

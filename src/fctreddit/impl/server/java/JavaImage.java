@@ -4,20 +4,14 @@ import fctreddit.api.User;
 import fctreddit.api.java.Image;
 import fctreddit.api.java.Result;
 import fctreddit.api.java.Users;
-import fctreddit.clients.CreateUserClient;
+
 import fctreddit.clients.GetUsersClient;
-import fctreddit.clients.grpc.GrpcUsersClient;
-import fctreddit.clients.java.UsersClient;
-import fctreddit.clients.rest.RestUsersClient;
-import fctreddit.impl.server.Discovery;
+
 import fctreddit.impl.server.persistence.Hibernate;
-import fctreddit.impl.server.rest.UsersServer;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,13 +50,17 @@ public class JavaImage implements Image {
         }
 
         // Return a URI to access the image via the GET endpoint
-        return "http://172.18.0.3:8082/rest/image/" + userId + "/" + imageId;
+        //return "http://172.18.0.3:8082/rest/image/" + userId + "/" + imageId;
+
+        return userId + "/" + imageId;
     }
 
 
     @Override
     public Result<String> createImage(String userId, byte[] imageContents, String password) {
         Log.info("createImage : user = " + userId + "; pwd = " + password);
+
+
         if (userId == null)
             return Result.error(Result.ErrorCode.BAD_REQUEST);
 
@@ -100,8 +98,6 @@ public class JavaImage implements Image {
         if (userId == null || imageId == null) {
             return Result.error(Result.ErrorCode.BAD_REQUEST);
         }
-        Log.info("bananas");
-
         Path pathToFile = Paths.get(IMAGES_DIR, userId, imageId + ".png");
 
         try {

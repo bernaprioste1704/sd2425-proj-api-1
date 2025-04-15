@@ -1,5 +1,7 @@
 package fctreddit.impl.server.rest;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.logging.Logger;
 import fctreddit.api.java.Image;
 import fctreddit.api.rest.RestImage;
@@ -30,7 +32,15 @@ public class ImageResource implements RestImage {
             throw new WebApplicationException(errorCodeToStatus(res.error()));
         }
 
-        return res.value();
+        String ip = null;
+        try {
+            ip = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+        String updatedValue = "http://" + ip + ":" + + ImageServer.PORT + "/rest/image/" + res.value();
+
+        return updatedValue;
     }
 
     @Override

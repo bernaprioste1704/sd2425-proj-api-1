@@ -1,11 +1,15 @@
 package fctreddit.impl.server.java;
 
 import fctreddit.api.Post;
+import fctreddit.api.User;
 import fctreddit.api.java.Content;
 import fctreddit.api.java.Result;
+import fctreddit.api.java.Users;
+import fctreddit.clients.GetUsersClient;
 import fctreddit.impl.server.persistence.Hibernate;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class JavaContent implements Content {
@@ -21,11 +25,24 @@ public class JavaContent implements Content {
     @Override
     public Result<String> createPost(Post post, String userPassword) {
         Log.info("createPost : " + post);
-        if (post == null || post.getPostId() == null || post.getContent() == null) {
+
+        if (post == null) {
             Log.info("Post object invalid.");
             return Result.error(Result.ErrorCode.BAD_REQUEST);
         }
         try {
+
+            Users client = new GetUsersClient().getClient();
+            Result<User> result = client.getUser(post.getAuthorId(), userPassword);
+
+            if( result.isOK()  )
+                Log.info("Get User:" + result.value() );
+            else {
+                Log.info("Get User failed with error: " + result.error());
+                return Result.error(result.error());
+            }
+            if (post.getPostId() == null)
+                post.setPostId(UUID.randomUUID().toString());
             hibernate.persist(post);
         } catch (Exception e) {
             e.printStackTrace();
@@ -43,8 +60,26 @@ public class JavaContent implements Content {
     }
     @Override
     public Result<Post> getPost(String postId) {
-        Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+        Log.info("getPost : postId = " + postId);
+        if (postId == null) {
+            Log.info("postId is null.");
+            return Result.error(Result.ErrorCode.BAD_REQUEST);
+        }
+
+        Post post = null;
+
+        try {
+            post = hibernate.get(Post.class, postId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(Result.ErrorCode.NOT_FOUND);
+
+        }
+        if (post == null) {
+            Log.info("Post does not exist.");
+            return Result.error(Result.ErrorCode.NOT_FOUND);
+        }
+        return Result.ok(post);
     }
 
     @Override

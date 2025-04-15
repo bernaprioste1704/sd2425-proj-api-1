@@ -4,6 +4,7 @@ package fctreddit.api;
  * Represents a Post and a Reply in the system
  */
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import java.util.UUID;
@@ -15,6 +16,7 @@ public class Post {
 	private String postId;
 	private String authorId;
 	private long creationTimestamp;
+	@Column(length = 2000)
 	private String content;
 	private String mediaUrl;
 	private String parentUrl; //This should be null when this is a top level post.
@@ -27,7 +29,7 @@ public class Post {
 	}
 	
 	public Post(String authorId, String content) {
-		this.postId = UUID.randomUUID().toString();;
+		this.postId = UUID.randomUUID().toString();
 		this.authorId = authorId;
 		this.creationTimestamp = System.currentTimeMillis();
 		this.content = content;
@@ -48,7 +50,10 @@ public class Post {
 	}
 	
 	public Post(String postId, String authorId, long creationTime, String content, String mediaUrl, String parentUrl, int upVote, int downVote) {
-		this.postId = postId;
+		if (postId == null || postId.equals(""))
+			this.postId = UUID.randomUUID().toString();
+		else
+			this.postId = postId;
 		this.authorId = authorId;
 		this.creationTimestamp = creationTime;
 		this.content = content;
