@@ -53,6 +53,7 @@ public class JavaImage implements Image {
         //return "http://172.18.0.3:8082/rest/image/" + userId + "/" + imageId;
 
         return userId + "/" + imageId;
+
     }
 
 

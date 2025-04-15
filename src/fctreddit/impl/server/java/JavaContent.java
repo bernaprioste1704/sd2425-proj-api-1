@@ -8,9 +8,12 @@ import fctreddit.api.java.Users;
 import fctreddit.clients.GetUsersClient;
 import fctreddit.impl.server.persistence.Hibernate;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class JavaContent implements Content {
 
@@ -58,6 +61,7 @@ public class JavaContent implements Content {
         Log.info("Not implemented yet");
         return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
     }
+
     @Override
     public Result<Post> getPost(String postId) {
         Log.info("getPost : postId = " + postId);
@@ -82,11 +86,38 @@ public class JavaContent implements Content {
         return Result.ok(post);
     }
 
+
+
     @Override
     public Result<List<String>> getPostAnswers(String postId, long maxTimeout) {
-        Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+        Log.info("getPostAnswers : postId = " + postId);
+
+        if (postId == null) {
+            Log.info("postId is null.");
+            return Result.error(Result.ErrorCode.BAD_REQUEST);
+        }
+
+        try {
+            String jpqlQuery = "FROM Post p WHERE p.parentUrl LIKE '%" + postId + "'";
+            List<Post> answerPosts = hibernate.jpql(jpqlQuery, Post.class);
+
+
+            answerPosts.sort(Comparator.comparingLong(Post::getCreationTimestamp));
+
+            List<String> answerIds = answerPosts.stream()
+                    .map(Post::getPostId)
+                    .collect(Collectors.toList());
+
+            return Result.ok(answerIds);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(Result.ErrorCode.CONFLICT);
+        }
     }
+
+
+
+
     @Override
     public Result<Post> updatePost(String postId, String userPassword, Post post) {
         Log.info("Not implemented yet");
