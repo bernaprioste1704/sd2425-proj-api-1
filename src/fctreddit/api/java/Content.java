@@ -81,7 +81,7 @@ public interface Content {
 	 * @param userPassword the password, it is assumed that only the author of the post 
 	 * can updated it, and as such, the password sent in the operation should belong to 
 	 * that user.
-	 * @param post A post object with the fields to be updated
+	 * @param post A post object with the fields to be update
 	 * @return 	OK the updated post, in case of success.
 	 * 			FORBIDDEN, if the password is not correct;
 	 * 			BAD_REQUEST, otherwise.

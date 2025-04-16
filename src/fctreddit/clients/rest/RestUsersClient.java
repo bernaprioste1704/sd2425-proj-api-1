@@ -58,7 +58,6 @@ public class RestUsersClient extends UsersClient {
         else
             return Result.ok( r.readEntity( String.class ));
 
-
     }
 
     public Result<User> getUser(String userId, String pwd) {
