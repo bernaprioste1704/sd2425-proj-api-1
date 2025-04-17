@@ -57,6 +57,7 @@ public class DataModelAdaptor {
         String parentUrl = from.hasParentUrl() ? from.getParentUrl() : null;
         int upVote = from.hasUpVote() ? from.getUpVote() : -1;
         int downVote = from.hasDownVote() ? from.getDownVote() : -1;
+        //int directReplies = from.hasDirectReplies() ? from.getDirectReplies() : -1;
 
         return new Post(postId, authorId, creationTimestamp, content, mediaUrl, parentUrl, upVote, downVote);
     }
@@ -88,6 +89,9 @@ public class DataModelAdaptor {
 
         if(from.getDownVote() != -1)
             b.setDownVote(from.getDownVote());
+
+        //if(from.getDirectReplies() != -1)
+         //   b.setDirectReplies(from.getDirectReplies());
 
         return b.build();
     }

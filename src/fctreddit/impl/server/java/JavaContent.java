@@ -59,6 +59,13 @@ public class JavaContent implements Content {
             if (post.getPostId() == null)
                 post.setPostId(UUID.randomUUID().toString());
             hibernate.persist(post);
+
+
+            String parentUrl = post.getParentUrl();
+            if (parentUrl != null) {
+                Log.info("Adding a Parent Repliy !!!");
+                changeParentReplies(true, parentUrl);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Log.info("Post already exists.");
@@ -68,10 +75,83 @@ public class JavaContent implements Content {
         return Result.ok(post.getPostId());
     }
 
+    private Result<Post> internalUpdatePost(String postId, Post post) {
+        Post existingPost = null;
+        try {
+            existingPost = hibernate.get(Post.class, postId);
+
+            if (existingPost == null) {
+                Log.info("Post does not exist.");
+                return Result.error(Result.ErrorCode.NOT_FOUND);
+            }
+
+            if (post.getContent() != null) {
+                existingPost.setContent(post.getContent());
+            }
+            if (post.getMediaUrl() != null) {
+                existingPost.setMediaUrl(post.getMediaUrl());
+            }
+            if (post.getDirectReplies() != -1) {
+                existingPost.setDirectReplies(post.getDirectReplies());
+            }
+            hibernate.update(existingPost);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(Result.ErrorCode.INTERNAL_ERROR);
+        }
+        return Result.ok(existingPost);
+    }
+    private void changeParentReplies(boolean addOrRemove, String parentUrl) {
+        String[] parentUrlArray = parentUrl.split("/");
+        String parentId = parentUrlArray[parentUrlArray.length-1];
+        Post parentPost = getPost(parentId).value();
+        if (addOrRemove)
+            parentPost.increaseDirectReplies();
+        else
+            parentPost.decreaseDirectReplies();
+        Post updatedPost = new Post(null, null,
+                -1, null,
+                null, null,
+                -1, -1,
+                parentPost.getDirectReplies()+1) ;
+        Log.info("Parent current replies: " + parentPost.getDirectReplies());
+        try {
+            internalUpdatePost(parentId, updatedPost);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.info("Post does not exist.");
+        }
+    }
     @Override
     public Result<List<String>> getPosts(long timestamp, String sortOrder) {
-        Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+        Log.info("getPosts : timestamp = " + timestamp + "; sortOrder = " + sortOrder);
+        List<String> postList =  null;
+
+
+        try {
+            String jpql_statement = null;
+            if (sortOrder == null) {
+                jpql_statement = "SELECT p.id FROM Post p WHERE p.parentUrl IS NULL AND p.creationTimestamp >= " + timestamp;
+            } else if (sortOrder.equals(MOST_UP_VOTES)) {
+                jpql_statement = "SELECT p.id FROM Post p WHERE p.parentUrl IS NULL AND p.creationTimestamp >= " + timestamp +
+                        " ORDER BY p.upVote DESC";
+            } else if (sortOrder.equals(MOST_REPLIES)) {
+                jpql_statement = "SELECT p.id FROM Post p WHERE p.parentUrl IS NULL AND p.creationTimestamp >= " + timestamp +
+                        " ORDER BY p.directReplies DESC";
+            }
+
+            postList = hibernate.jpql(jpql_statement, String.class);
+            /*for (int i = 0; i < postList.size(); i++) {
+                String postId = postList.get(i);
+                Post post = hibernate.get(Post.class, postId);
+                Log.info(post.getDirectReplies() + " replies");
+            }*/
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.info("Error");
+        }
+        return Result.ok(postList);
     }
 
     @Override
@@ -129,8 +209,47 @@ public class JavaContent implements Content {
 
     @Override
     public Result<Post> updatePost(String postId, String userPassword, Post post) {
-        Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+        Log.info("updatePost : postId = " + postId + "; userPassword = " + userPassword + "; post = " + post);
+        if (postId == null || post == null) {
+            Log.info("postId or post is null.");
+            return Result.error(Result.ErrorCode.BAD_REQUEST);
+        }
+        Post existingPost = null;
+        try {
+            existingPost = hibernate.get(Post.class, postId);
+
+            if (existingPost == null) {
+                Log.info("Post does not exist.");
+                return Result.error(Result.ErrorCode.NOT_FOUND);
+            } else if (existingPost.getDirectReplies() != 0 ||
+                    existingPost.getDownVote() != 0 || existingPost.getUpVote() != 0) {
+                Log.info("Post has replies or votes.");
+                return Result.error(Result.ErrorCode.CONFLICT);
+            }
+
+            if (globalClient == null)
+                globalClient = new GetUsersClient().getClient();
+            Result<User> result = globalClient.getUser(post.getAuthorId(), userPassword);
+            if( result.isOK()  )
+                Log.info("Get user:" + result.value() );
+            else {
+                Log.info("Get user failed with error: " + result.error());
+                return Result.error(result.error());
+            }
+
+            if (post.getContent() != null) {
+                existingPost.setContent(post.getContent());
+            }
+            if (post.getMediaUrl() != null) {
+                existingPost.setMediaUrl(post.getMediaUrl());
+            }
+            hibernate.update(existingPost);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(Result.ErrorCode.INTERNAL_ERROR);
+        }
+        return Result.ok(existingPost);
     }
     @Override
     public Result<Void> deletePost(String postId, String userPassword)
