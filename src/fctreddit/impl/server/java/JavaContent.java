@@ -63,7 +63,6 @@ public class JavaContent implements Content {
 
             String parentUrl = post.getParentUrl();
             if (parentUrl != null) {
-                Log.info("Adding a Parent Repliy !!!");
                 changeParentReplies(true, parentUrl);
             }
         } catch (Exception e) {
@@ -190,16 +189,28 @@ public class JavaContent implements Content {
 
         try {
             String jpqlQuery = "FROM Post p WHERE p.parentUrl LIKE '%" + postId + "'";
-            List<Post> answerPosts = hibernate.jpql(jpqlQuery, Post.class);
-
-
-            answerPosts.sort(Comparator.comparingLong(Post::getCreationTimestamp));
-
-            List<String> answerIds = answerPosts.stream()
+            List<Post> initialAnswers = hibernate.jpql(jpqlQuery, Post.class);
+            initialAnswers.sort(Comparator.comparingLong(Post::getCreationTimestamp));
+            List<String> previousIds = initialAnswers.stream()
                     .map(Post::getPostId)
                     .collect(Collectors.toList());
 
-            return Result.ok(answerIds);
+            if (maxTimeout > 0) {
+                long startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() - startTime < maxTimeout) {
+                    Thread.sleep(500); // Poll every 500ms (adjust if needed)
+                    List<Post> updatedAnswers = hibernate.jpql(jpqlQuery, Post.class);
+                    updatedAnswers.sort(Comparator.comparingLong(Post::getCreationTimestamp));
+                    List<String> updatedIds = updatedAnswers.stream()
+                            .map(Post::getPostId)
+                            .collect(Collectors.toList());
+
+                    if (!updatedIds.equals(previousIds)) {
+                        return Result.ok(updatedIds); // New reply detected
+                    }
+                }
+            }
+            return Result.ok(previousIds);
         } catch (Exception e) {
             e.printStackTrace();
             return Result.error(Result.ErrorCode.CONFLICT);
