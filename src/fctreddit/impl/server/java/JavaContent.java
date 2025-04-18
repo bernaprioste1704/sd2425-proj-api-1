@@ -44,22 +44,12 @@ public class JavaContent implements Content {
             return Result.error(Result.ErrorCode.BAD_REQUEST);
         }
         try {
+            authenticateUser(post.getAuthorId(), userPassword);
 
-            if (globalClient == null)
-                globalClient = new GetUsersClient().getClient();
-
-            Result<User> result = globalClient.getUser(post.getAuthorId(), userPassword);
-
-            if( result.isOK()  )
-                Log.info("Get User:" + result.value() );
-            else {
-                Log.info("Get User failed with error: " + result.error());
-                return Result.error(result.error());
-            }
             if (post.getPostId() == null)
                 post.setPostId(UUID.randomUUID().toString());
-            hibernate.persist(post);
 
+            hibernate.persist(post);
 
             String parentUrl = post.getParentUrl();
             if (parentUrl != null) {
@@ -102,6 +92,7 @@ public class JavaContent implements Content {
         return Result.ok(existingPost);
     }
     private void changeParentReplies(boolean addOrRemove, String parentUrl) {
+        Log.info("Changing Parent Replies");
         String[] parentUrlArray = parentUrl.split("/");
         String parentId = parentUrlArray[parentUrlArray.length-1];
         Post parentPost = getPost(parentId).value();
@@ -141,11 +132,6 @@ public class JavaContent implements Content {
             }
 
             postList = hibernate.jpql(jpql_statement, String.class);
-            /*for (int i = 0; i < postList.size(); i++) {
-                String postId = postList.get(i);
-                Post post = hibernate.get(Post.class, postId);
-                Log.info(post.getDirectReplies() + " replies");
-            }*/
         } catch (Exception e) {
             e.printStackTrace();
             Log.info("Error");
@@ -198,7 +184,7 @@ public class JavaContent implements Content {
             if (maxTimeout > 0) {
                 long startTime = System.currentTimeMillis();
                 while (System.currentTimeMillis() - startTime < maxTimeout) {
-                    Thread.sleep(500); // Poll every 500ms (adjust if needed)
+                    Thread.sleep(500);
                     List<Post> updatedAnswers = hibernate.jpql(jpqlQuery, Post.class);
                     updatedAnswers.sort(Comparator.comparingLong(Post::getCreationTimestamp));
                     List<String> updatedIds = updatedAnswers.stream()
@@ -206,7 +192,7 @@ public class JavaContent implements Content {
                             .collect(Collectors.toList());
 
                     if (!updatedIds.equals(previousIds)) {
-                        return Result.ok(updatedIds); // New reply detected
+                        return Result.ok(updatedIds);
                     }
                 }
             }
@@ -238,15 +224,7 @@ public class JavaContent implements Content {
                 return Result.error(Result.ErrorCode.CONFLICT);
             }
 
-            if (globalClient == null)
-                globalClient = new GetUsersClient().getClient();
-            Result<User> result = globalClient.getUser(post.getAuthorId(), userPassword);
-            if( result.isOK()  )
-                Log.info("Get user:" + result.value() );
-            else {
-                Log.info("Get user failed with error: " + result.error());
-                return Result.error(result.error());
-            }
+            authenticateUser(post.getAuthorId(), userPassword);
 
             if (post.getContent() != null) {
                 existingPost.setContent(post.getContent());
@@ -263,10 +241,26 @@ public class JavaContent implements Content {
         return Result.ok(existingPost);
     }
     @Override
-    public Result<Void> deletePost(String postId, String userPassword)
-    {
-        Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+    public Result<Void> deletePost(String postId, String userPassword) {
+        Log.info("deletePost : postId = " + postId + "; userPassword = " + userPassword);
+
+        Post post = getPost(postId).value();
+        String userId = post.getAuthorId();
+        try {
+            authenticateUser(userId, userPassword);
+            if (post.getDirectReplies() != 0 ||
+                    post.getDownVote() != 0 || post.getUpVote() != 0) {
+                Log.info("Post has replies or votes.");
+                return Result.error(Result.ErrorCode.CONFLICT);
+            }
+
+            hibernate.delete(post);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.info("Post does not exist.");
+            return Result.error(Result.ErrorCode.NOT_FOUND);
+        }
+
     }
 
     @Override
@@ -276,19 +270,9 @@ public class JavaContent implements Content {
     }
 
     private Result<Void> votePost(String postId, String userId, String userPassword, boolean vote) {
-        Result<User> result = null;
         try {
-            if (globalClient == null)
-                globalClient = new GetUsersClient().getClient();
+            authenticateUser(userId, userPassword);
 
-            result = globalClient.getUser(userId, userPassword);
-
-            if( result.isOK()  )
-                Log.info("Get user:" + result.value() );
-            else {
-                Log.info("Get user failed with error: " + result.error());
-                return Result.error(result.error());
-            }
             Vote newVote = new Vote(userId, postId, vote);
             if (hibernate.get(Vote.class, newVote.getId()) != null)
                 throw new EntityExistsException("Vote already exists");
@@ -306,31 +290,31 @@ public class JavaContent implements Content {
     }
 
     private Result<Post> addVoteCount(String postId, boolean vote) {
-    try {
-        GetContentClient contentClient = new GetContentClient();
-        Content cl = contentClient.getClient();
+        try {
+            GetContentClient contentClient = new GetContentClient();
+            Content cl = contentClient.getClient();
 
-        Post post = cl.getPost(postId).value();
-        if (vote)
-            post.setUpVote(post.getUpVote() + 1);
-        else
-            post.setDownVote(post.getDownVote() + 1);
+            Post post = cl.getPost(postId).value();
+            if (vote)
+                post.setUpVote(post.getUpVote() + 1);
+            else
+                post.setDownVote(post.getDownVote() + 1);
 
-        hibernate.update(post);
-        return Result.ok(post);
+            hibernate.update(post);
+            return Result.ok(post);
 
 
-    } catch (IOException e) {
-        throw new RuntimeException(e);
-    } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+        }
     }
 
-    }
     @Override
     public Result<Void> removeUpVotePost(String postId, String userId, String userPassword) {
-        Log.info("Not implemented yet");
-        return Result.error(Result.ErrorCode.NOT_IMPLEMENTED);
+        Log.info("removeUpVotePost : postId = " + postId + "; userId = " + userId);
+
     }
 
     @Override
@@ -396,5 +380,17 @@ public class JavaContent implements Content {
         return Result.ok(post.getDownVote());
     }
 
+    private Result<User> authenticateUser(String userId, String password) {
+            if (globalClient == null)
+                globalClient = new GetUsersClient().getClient();
 
+            Result<User> result = globalClient.getUser(userId, password);
+            if (result.isOK())
+                Log.info("Get user:" + result.value());
+            else {
+                Log.info("Get user failed with error: " + result.error());
+                return Result.error(result.error());
+            }
+        return Result.ok();
+    }
 }
