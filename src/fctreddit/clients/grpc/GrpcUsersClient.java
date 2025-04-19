@@ -44,8 +44,9 @@ public class GrpcUsersClient extends UsersClient {
     final UsersGrpc.UsersBlockingStub stub;
 
     public GrpcUsersClient(URI serverURI) {
-        Channel channel = ManagedChannelBuilder.forAddress(serverURI.getHost(), serverURI.getPort()).usePlaintext().build();
-        stub = UsersGrpc.newBlockingStub( channel ).withDeadlineAfter(READ_TIMEOUT, TimeUnit.MILLISECONDS);
+        Channel channel = ManagedChannelBuilder.forAddress(serverURI.getHost(), serverURI.getPort())
+                .enableRetry().usePlaintext().build();
+        stub = UsersGrpc.newBlockingStub( channel );
     }
 
     @Override

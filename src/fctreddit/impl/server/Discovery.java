@@ -95,8 +95,8 @@ public class Discovery {
 
 		if (this.serviceName != null && this.serviceURI != null) {
 
-			/*Log.info(String.format("Starting Discovery announcements on: %s for: %s -> %s", addr, serviceName,
-					serviceURI));*/
+			Log.info(String.format("Starting Discovery announcements on: %s for: %s -> %s", addr, serviceName,
+					serviceURI));
 
 			byte[] announceBytes = String.format("%s%s%s", serviceName, DELIMITER, serviceURI).getBytes();
 			DatagramPacket announcePkt = new DatagramPacket(announceBytes, announceBytes.length, addr);

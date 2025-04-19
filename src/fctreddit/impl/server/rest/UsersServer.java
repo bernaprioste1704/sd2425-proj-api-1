@@ -34,9 +34,6 @@ public class UsersServer {
 
             Log.info(String.format("%s Server ready @ %s\n",  SERVICE, serverURI));
 
-            String host = InetAddress.getLocalHost().getHostAddress();
-
-            /*Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, "tcp://" + host + ":" + PORT);*/
             Discovery disc = new Discovery(Discovery.DISCOVERY_ADDR, SERVICE, serverURI);
             disc.start();
 

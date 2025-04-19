@@ -25,7 +25,12 @@ import fctreddit.impl.grpc.generated_java.ContentProtoBuf.GetPostsArgs;
 import fctreddit.impl.grpc.generated_java.ContentProtoBuf.GrpcPost;
 
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class GrpcContentServerStub implements ContentGrpc.AsyncService, BindableService{
@@ -84,19 +89,34 @@ public class GrpcContentServerStub implements ContentGrpc.AsyncService, Bindable
     @Override
     public void getPostAnswers(GetPostAnswersArgs request, StreamObserver<GetPostsResult> responseObserver) {
         Result<List<String>> res = impl.getPostAnswers(request.getPostId(), request.getTimeout());
-        if (! res.isOK() )
+        if (!res.isOK()) {
             responseObserver.onError(errorCodeToStatus(res.error()));
-        else {
+        } else {
             GetPostsResult.Builder resultBuilder = GetPostsResult.newBuilder();
+            List<String> postIds = res.value();
 
-            for (String postId : res.value()) {
-                Result<Post> postResult = impl.getPost(postId);
-                if (postResult.isOK()) {
-                    GrpcPost grpcPost = DataModelAdaptor.Post_to_GrpcPost(postResult.value());
-                    resultBuilder.addPostId(grpcPost.getPostId());
+            // Executor for parallel fetching
+            ExecutorService executor = Executors.newFixedThreadPool(10);  // Adjust pool size based on load
+            List<Future<Post>> futures = new ArrayList<>();
+
+            for (String postId : postIds) {
+                futures.add(executor.submit(() -> impl.getPost(postId).value()));
+            }
+
+            // Collect results
+            for (Future<Post> future : futures) {
+                try {
+                    Post post = future.get();  // Blocks until the post is fetched
+                    if (post != null) {
+                        GrpcPost grpcPost = DataModelAdaptor.Post_to_GrpcPost(post);
+                        resultBuilder.addPostId(grpcPost.getPostId());
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    // Handle error
                 }
             }
 
+            executor.shutdown();  // Properly shut down the executor
             responseObserver.onNext(resultBuilder.build());
             responseObserver.onCompleted();
         }

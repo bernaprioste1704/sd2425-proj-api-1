@@ -13,6 +13,7 @@ import fctreddit.impl.server.persistence.Hibernate;
 import jakarta.persistence.EntityExistsException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class JavaContent implements Content {
 
     private Users globalClient;
 
+    private final Object createPostLock = new Object();
 
     public final static boolean UPVOTE = true;
     public final static boolean DOWNVOTE = false;
@@ -52,6 +54,7 @@ public class JavaContent implements Content {
             hibernate.persist(post);
 
             String parentUrl = post.getParentUrl();
+
             if (parentUrl != null) {
                 changeParentReplies(true, parentUrl);
             }
@@ -59,6 +62,10 @@ public class JavaContent implements Content {
             e.printStackTrace();
             Log.info("Post already exists.");
             return Result.error(Result.ErrorCode.CONFLICT);
+        }
+
+        synchronized (createPostLock) {
+            createPostLock.notifyAll();  // Notify all threads waiting on this postId lock
         }
 
         return Result.ok(post.getPostId());
@@ -121,7 +128,7 @@ public class JavaContent implements Content {
 
         try {
             String jpql_statement = null;
-            if (sortOrder == null) {
+            if (sortOrder == null || sortOrder == "") {
                 jpql_statement = "SELECT p.id FROM Post p WHERE p.parentUrl IS NULL AND p.creationTimestamp >= " + timestamp;
             } else if (sortOrder.equals(MOST_UP_VOTES)) {
                 jpql_statement = "SELECT p.id FROM Post p WHERE p.parentUrl IS NULL AND p.creationTimestamp >= " + timestamp +
@@ -163,45 +170,41 @@ public class JavaContent implements Content {
     }
 
 
-
     @Override
     public Result<List<String>> getPostAnswers(String postId, long maxTimeout) {
         Log.info("getPostAnswers : postId = " + postId);
 
         if (postId == null) {
-            Log.info("postId is null.");
             return Result.error(Result.ErrorCode.BAD_REQUEST);
         }
-
-        try {
-            String jpqlQuery = "FROM Post p WHERE p.parentUrl LIKE '%" + postId + "'";
-            List<Post> initialAnswers = hibernate.jpql(jpqlQuery, Post.class);
-            initialAnswers.sort(Comparator.comparingLong(Post::getCreationTimestamp));
-            List<String> previousIds = initialAnswers.stream()
-                    .map(Post::getPostId)
-                    .collect(Collectors.toList());
-
-            if (maxTimeout > 0) {
-                long startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < maxTimeout) {
-                    Thread.sleep(500);
-                    List<Post> updatedAnswers = hibernate.jpql(jpqlQuery, Post.class);
-                    updatedAnswers.sort(Comparator.comparingLong(Post::getCreationTimestamp));
-                    List<String> updatedIds = updatedAnswers.stream()
-                            .map(Post::getPostId)
-                            .collect(Collectors.toList());
-
-                    if (!updatedIds.equals(previousIds)) {
-                        return Result.ok(updatedIds);
-                    }
+        if (maxTimeout > 0) {
+            synchronized (createPostLock) {
+                try {
+                    createPostLock.wait(maxTimeout); // Waits until notified or timeout
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return Result.error(Result.ErrorCode.INTERNAL_ERROR);
                 }
             }
-            return Result.ok(previousIds);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Result.error(Result.ErrorCode.CONFLICT);
         }
+
+        // After wait: always run the query once
+        String jpqlQuery = "FROM Post p WHERE p.parentUrl LIKE '%" + postId + "'";
+        List<Post> initialAnswers = hibernate.jpql(jpqlQuery, Post.class);
+        initialAnswers.sort(Comparator.comparingLong(Post::getCreationTimestamp));
+        List<String> ids = initialAnswers.stream()
+                .map(Post::getPostId)
+                .collect(Collectors.toList());
+
+        return Result.ok(ids);
     }
+
+
+
+
+
+
+
 
 
     @Override
@@ -260,7 +263,7 @@ public class JavaContent implements Content {
             Log.info("Post does not exist.");
             return Result.error(Result.ErrorCode.NOT_FOUND);
         }
-
+        return Result.ok();
     }
 
     @Override
@@ -309,12 +312,32 @@ public class JavaContent implements Content {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
         }
+
     }
 
     @Override
     public Result<Void> removeUpVotePost(String postId, String userId, String userPassword) {
         Log.info("removeUpVotePost : postId = " + postId + "; userId = " + userId);
+        try {
+            authenticateUser(userId, userPassword);
 
+            Vote vote = new Vote(userId, postId, UPVOTE);
+            hibernate.delete(vote);
+
+            Post post = hibernate.get(Post.class, postId);
+            if (post == null) {
+                Log.info("Post does not exist.");
+                return Result.error(Result.ErrorCode.NOT_FOUND);
+            }
+            post.setUpVote(post.getUpVote() - 1);
+            hibernate.update(post);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.info("Vote does not exist.");
+            return Result.error(Result.ErrorCode.NOT_FOUND);
+        }
+        return Result.ok();
     }
 
     @Override
@@ -380,17 +403,10 @@ public class JavaContent implements Content {
         return Result.ok(post.getDownVote());
     }
 
-    private Result<User> authenticateUser(String userId, String password) {
-            if (globalClient == null)
-                globalClient = new GetUsersClient().getClient();
+    private Result<User> authenticateUser(String userId, String password) throws IOException, InterruptedException {
+        if (globalClient == null)
+            globalClient = new GetUsersClient().getClient();
 
-            Result<User> result = globalClient.getUser(userId, password);
-            if (result.isOK())
-                Log.info("Get user:" + result.value());
-            else {
-                Log.info("Get user failed with error: " + result.error());
-                return Result.error(result.error());
-            }
-        return Result.ok();
+        return globalClient.getUser(userId, password);
     }
 }

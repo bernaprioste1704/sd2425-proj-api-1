@@ -62,7 +62,7 @@ public interface Content {
 	 * identified by the postId as their parent (i.e., the replies to that post),
 	 * the order should be the creation order of those posts.
 	 * @param postId the postId for which answers want to be obtained
-	 * @param timeout (optional) indicates the maximum amount of time that this operation should
+	 * @param maxTimeout (optional) indicates the maximum amount of time that this operation should
 	 * 		  wait (before returning a reply to the client) for a new answer to be added
 	 * 		  to the post. If a new answer is added to the target post after the start of 
 	 * 		  the execution of this operation and before the timeout expires an answer should
